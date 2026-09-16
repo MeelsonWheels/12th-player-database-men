@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — 12th Player Men's Database</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --ink: #0B1220;
+      --blue: #2f5bff;
+      --blue-light: #EEF2FF;
+      --muted: #6B7280;
+      --line: #E2E8F0;
+      --panel: #F5F7FA;
+      --surface: #FFFFFF;
+      --red: #dc2626;
+      --red-light: #FEF2F2;
+      --green: #16a34a;
+      --green-light: #F0FDF4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .mark {
+      width: 36px; height: 36px;
+      border: 2px solid var(--ink);
+      border-radius: 11px;
+      display: grid; place-items: center;
+      font-weight: 900; font-size: 13px;
+      color: var(--blue);
+    }
+    .brand-text strong { display: block; font-size: 14px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+    .brand-text span { font-size: 11px; color: var(--muted); }
+
+    .back-link {
+      font-size: 13px; font-weight: 500;
+      color: var(--muted); text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .back-link:hover { color: var(--ink); }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 20px;
+    }
+
+    .auth-wrap { width: 100%; max-width: 460px; }
+
+    .auth-header { margin-bottom: 28px; }
+    .auth-header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 6px; }
+    .auth-header p { font-size: 14px; color: var(--muted); }
+
+    .auth-tabs {
+      display: flex;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 4px;
+      margin-bottom: 24px;
+      gap: 4px;
+    }
+
+    .atab {
+      flex: 1; padding: 9px 12px;
+      font-size: 13px; font-weight: 600;
+      text-align: center; cursor: pointer;
+      border: 0; background: transparent;
+      border-radius: 11px;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .atab.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 28px;
+    }
+
+    .form-group { margin-bottom: 16px; }
+
+    label {
+      display: block;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, select, textarea {
+      font-family: inherit; font-size: 14px;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 11px 14px;
+      background: var(--panel);
+      color: var(--ink);
+      transition: border-color 0.15s;
+      outline: 0;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      background: var(--surface);
+    }
+    textarea { min-height: 80px; resize: vertical; }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--blue);
+      color: #fff; border: 0;
+      border-radius: 11px;
+      padding: 13px;
+      font-size: 14px; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+      transition: opacity 0.15s;
+      margin-top: 8px;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .error-box {
+      display: none;
+      background: var(--red-light);
+      border: 1px solid #fca5a5;
+      border-radius: 11px;
+      padding: 12px 14px;
+      font-size: 13px; color: var(--red);
+      margin-bottom: 16px;
+    }
+
+    .role-note {
+      font-size: 12px; color: var(--muted);
+      line-height: 1.65; margin-top: 16px;
+      padding: 12px 14px;
+      background: var(--panel);
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+
+    .role-note strong { color: var(--ink); }
+
+    .pending-box {
+      display: none;
+      text-align: center;
+      padding: 32px 20px;
+    }
+    .pending-box svg {
+      width: 44px; height: 44px;
+      stroke: var(--blue); fill: none;
+      stroke-width: 1.5;
+      margin: 0 auto 14px; display: block;
+    }
+    .pending-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .pending-box p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    .success-box {
+      display: none;
+      text-align: center;
+      padding: 32px 20px;
+    }
+    .success-box svg {
+      width: 44px; height: 44px;
+      stroke: var(--green); fill: none;
+      stroke-width: 1.5;
+      margin: 0 auto 14px; display: block;
+    }
+    .success-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .success-box p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px; color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="database.html">
+      <div class="mark">12</div>
+      <div class="brand-text">
+        <strong>The 12th Player</strong>
+        <span>Database</span>
+      </div>
+    </a>
+    <a class="back-link" href="database.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7 7-7-7 7-7"/></svg>
+      Back to home
+    </a>
+  </nav>
+
+  <main>
+    <div class="auth-wrap">
+      <div class="auth-header">
+        <h1>Sign in</h1>
+        <p>Access the 12th Player Database</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="atab active" onclick="switchMode('login')">Log in</button>
+        <button class="atab" onclick="switchMode('signup')">Request access</button>
+      </div>
+
+      <div class="auth-card">
+
+        <!-- LOGIN -->
+        <div id="loginForm">
+          <div class="error-box" id="loginError"></div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="loginEmail" placeholder="you@example.com" />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="Your password"
+              onkeydown="if(event.key==='Enter') handleLogin()" />
+          </div>
+          <button class="btn-primary" onclick="handleLogin()" id="loginBtn">Sign in</button>
+        </div>
+
+        <!-- SIGNUP -->
+        <div id="signupForm" style="display:none">
+          <div class="error-box" id="signupError"></div>
+
+          <div class="form-group">
+            <label>Full name</label>
+            <input type="text" id="signupName" placeholder="Your full name" />
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="signupEmail" placeholder="you@example.com" />
+          </div>
+
+          <div class="form-group">
+            <label>Organisation</label>
+            <input type="text" id="signupOrg" placeholder="e.g. Kaizer Chiefs, Sisu Sports Management" />
+          </div>
+
+          <div class="form-group">
+            <label>Organisation type</label>
+            <select id="signupOrgType" onchange="handleOrgTypeChange()">
+              <option value="">Select type</option>
+              <option value="Club">Club</option>
+              <option value="Agency">Agency</option>
+              <option value="Scout">Scout</option>
+              <option value="Player">Player</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="orgTypeOtherGroup" style="display:none">
+            <label>Please specify</label>
+            <input type="text" id="signupOrgTypeOther" placeholder="Describe your organisation type" />
+          </div>
+
+          <div class="form-group">
+            <label>Access type</label>
+            <select id="signupRole" onchange="handleRoleChange()">
+              <option value="">Select access type</option>
+              <option value="viewer">Viewer — browse player profiles</option>
+              <option value="club_editor">Club — register and manage your players</option>
+              <option value="scout">Scout — contribute scouting reports</option>
+              <option value="reviewer">Reviewer — give feedback on players</option>
+              <option value="player">Player — add and manage your own profile</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="signupPassword" placeholder="Minimum 8 characters" />
+          </div>
+
+          <button class="btn-primary" onclick="handleSignup()" id="signupBtn">Request access</button>
+
+          <div class="role-note" id="roleNote">
+            Select an access type to see what's included.
+          </div>
+        </div>
+
+        <!-- PENDING -->
+        <div class="pending-box" id="pendingBox">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <h3>Request received</h3>
+          <p>Your access request has been sent to the database team. You'll receive an email at <strong id="pendingEmail"></strong> once your access is approved.</p>
+        </div>
+
+        <!-- VIEWER SUCCESS -->
+        <div class="success-box" id="successBox">
+          <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <h3>Access granted</h3>
+          <p>Your account has been created. Taking you to the database now...</p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 The 12th Player Database</p>
+  </footer>
+
+  <script>
+    const SUPABASE_URL = 'https://lhaipjhvxcjmfthadtry.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_jQ8RbDWFXpTaci0SRHtuAQ_KCE91rBB';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    const ROLE_NOTES = {
+      viewer: '<strong>Viewer</strong> — Browse all verified player profiles. Physical data is hidden by default; you can request access to a specific player\'s full data directly from their profile.<br><br>Requires approval before access is granted.',
+      club_editor: '<strong>Club</strong> — Register your squad, add and edit player profiles, upload physical testing data, and control which data is visible to the public.<br><br>Requires approval before access is granted.',
+      scout: '<strong>Scout</strong> — Contribute scouting reports linked to players, clubs, and national teams. Physical data requires a separate request per player.<br><br>Requires approval before access is granted.',
+      reviewer: '<strong>Reviewer</strong> — Give structured feedback on players. Your feedback is visible to club editors only. Physical data requires a separate request per player.<br><br>Requires approval before access is granted.',
+      player: '<strong>Player</strong> — Add and manage your own profile if your club is not yet registered on the platform.<br><br>Requires approval before your profile goes live.'
+    };
+
+    function switchMode(mode) {
+      document.querySelectorAll('.atab').forEach((t, i) =>
+        t.classList.toggle('active', (mode === 'login' && i === 0) || (mode === 'signup' && i === 1)));
+      document.getElementById('loginForm').style.display = mode === 'login' ? 'block' : 'none';
+      document.getElementById('signupForm').style.display = mode === 'signup' ? 'block' : 'none';
+      document.getElementById('pendingBox').style.display = 'none';
+      document.getElementById('successBox').style.display = 'none';
+    }
+
+    function handleOrgTypeChange() {
+      const val = document.getElementById('signupOrgType').value;
+      document.getElementById('orgTypeOtherGroup').style.display = val === 'Other' ? 'block' : 'none';
+    }
+
+    function handleRoleChange() {
+      const val = document.getElementById('signupRole').value;
+      const note = document.getElementById('roleNote');
+      note.innerHTML = val ? ROLE_NOTES[val] : 'Select an access type to see what\'s included.';
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+
+      errEl.style.display = 'none';
+      if (!email || !password) { showError(errEl, 'Please enter your email and password.'); return; }
+
+      btn.disabled = true; btn.textContent = 'Signing in...';
+
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        showError(errEl, 'Incorrect email or password. Please try again.');
+        btn.disabled = false; btn.textContent = 'Sign in';
+        return;
+      }
+
+      // Auth successful — database.html handles role and status checks
+      window.location.href = 'database.html';
+    }
+
+    async function handleSignup() {
+      const name = document.getElementById('signupName').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const org = document.getElementById('signupOrg').value.trim();
+      const orgType = document.getElementById('signupOrgType').value;
+      const orgTypeOther = document.getElementById('signupOrgTypeOther').value.trim();
+      const role = document.getElementById('signupRole').value;
+      const password = document.getElementById('signupPassword').value;
+      const errEl = document.getElementById('signupError');
+      const btn = document.getElementById('signupBtn');
+
+      errEl.style.display = 'none';
+
+      if (!name || !email || !role || !password) {
+        showError(errEl, 'Please fill in all required fields.'); return;
+      }
+      if (!orgType) { showError(errEl, 'Please select your organisation type.'); return; }
+      if (orgType === 'Other' && !orgTypeOther) {
+        showError(errEl, 'Please specify your organisation type.'); return;
+      }
+      if (password.length < 8) {
+        showError(errEl, 'Password must be at least 8 characters.'); return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Sending request...';
+
+      const finalOrgType = orgType === 'Other' ? orgTypeOther : orgType;
+      const supabaseRole = ['club_editor'].includes(role) ? 'club_editor' :
+                           ['scout', 'reviewer'].includes(role) ? role : role;
+
+      const { data, error } = await sb.auth.signUp({
+        email, password,
+        options: {
+          data: {
+            full_name: name,
+            company: org,
+            organisation_type: finalOrgType,
+            role: supabaseRole,
+            role_type: role
+          }
+        }
+      });
+
+      if (error) {
+        showError(errEl, error.message);
+        btn.disabled = false; btn.textContent = 'Request access';
+        return;
+      }
+
+      // All roles require approval — sign out and show pending
+      await sb.auth.signOut();
+      document.getElementById('signupForm').style.display = 'none';
+      document.getElementById('pendingBox').style.display = 'block';
+      document.getElementById('pendingEmail').textContent = email;
+    }
+
+    function showError(el, msg) {
+      el.textContent = msg; el.style.display = 'block';
+    }
+
+    // Already logged in → go straight to database
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = 'database.html';
+    });
+  </script>
+</body>
+</html>
